@@ -1,0 +1,20 @@
+{
+  "id": "xingxu-qingyuan-wyn",
+  "name": "星宿情缘-wyn",
+  "version": "1.0.0",
+  "description": "二十八星宿感情类型故事创作工具。基于中国古天文学二十八星宿体系，为爱情/情感故事提供人物原型、配对关系、命运纠缠的创作框架。适合言情小说、偶像剧、爱情电影的创作。",
+  "author": "wuyongnaren",
+  "tags": ["二十八星宿", "感情", "爱情", "命理", "小说", "剧本", "言情"],
+  "category": "creative-writing",
+  "compatibility": "适用于 WorkBuddy / Claude Code / Cursor / OpenAI Codex 等支持 Agent Skills 的工具。需要文件读写权限。",
+  "dependencies": [],
+  "files": {
+    "main": "SKILL.md",
+    "references": []
+  },
+  "changelog": {
+    "1.0.0": [
+      "初始版本：二十八星宿感情创作框架"
+    ]
+  }
+}

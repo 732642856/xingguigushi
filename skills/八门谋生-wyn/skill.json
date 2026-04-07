@@ -1,0 +1,18 @@
+{
+  "id": "bamen-mousheng-wyn",
+  "name": "八门谋生-wyn",
+  "version": "1.0.0",
+  "description": "权谋/商战故事创作工具。以奇门遁甲九宫为底层，结合其他写作资源。",
+  "author": "wuyongnaren",
+  "tags": ["奇门遁甲", "权谋", "商战", "阴谋"],
+  "category": "creative-writing",
+  "compatibility": "适用于WorkBuddy等工具",
+  "dependencies": [],
+  "files": {
+    "main": "SKILL.md",
+    "references": []
+  },
+  "changelog": {
+    "1.0.0": ["初始版本"]
+  }
+}

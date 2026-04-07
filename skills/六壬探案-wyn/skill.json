@@ -1,0 +1,45 @@
+{
+  "id": "liuren-tan-an-wyn",
+  "name": "六壬探案-wyn",
+  "version": "1.5.1",
+  "description": "专业悬疑推理故事创作工具。底层使用大六壬多维度映射算法，分析案件线索并生成精品故事框架。支持多种题材：悬疑推理、犯罪侦查、都市悬疑、黑色幽默。适合需要复杂人物关系、多线叙事、精密情节设计的创作场景。",
+  "author": "wuyongnaren",
+  "tags": ["悬疑", "推理", "犯罪", "探案", "小说", "剧本", "大六壬", "都市"],
+  "category": "creative-writing",
+  "compatibility": "适用于 WorkBuddy / Claude Code / Cursor / OpenAI Codex 等支持 Agent Skills 的工具。需要文件读写权限。",
+  "dependencies": [],
+  "files": {
+    "main": "SKILL.md",
+    "references": [
+      "references/liuren-mapping.md",
+      "references/crime-novel-system.md",
+      "references/ziwei-vs-liuren.md",
+      "references/dark-humor-dialogue.md",
+      "references/folk-supernatural.md",
+      "references/character-archetypes.md",
+      "references/plot-structures.md",
+      "references/korean-drama-method.md",
+      "references/screenplay-format.md"
+    ],
+    "templates": [
+      ".learnings/CHARACTERS.md",
+      ".learnings/LOCATIONS.md",
+      ".learnings/PLOT_POINTS.md",
+      ".learnings/STORY_BIBLE.md",
+      ".learnings/ERRORS.md"
+    ],
+    "scripts": [
+      "scripts/init-project.sh"
+    ]
+  },
+  "changelog": {
+    "1.5.1": [
+      "添加网络搜索辅助功能及隐私保护规范",
+      "整合多个写作 skill 参考资料",
+      "优化悬疑推理模式用户体验"
+    ],
+    "1.0.0": [
+      "初始版本"
+    ]
+  }
+}
