@@ -1,0 +1,34 @@
+{
+  "id": "xinggui-rensheng-wyn",
+  "name": "星轨人生-wyn",
+  "version": "1.0.0",
+  "description": "紫微斗数综合创作工具箱。整合底层算法引擎（ziwei-engine）与上层应用（角色设计），提供从排盘到人物设定的一站式服务。既可作为代码模块供开发者调用，也可作为Prompt工具为小说/剧本快速生成完整人物命运设定。适合需要深度角色设计的创作场景。",
+  "author": "wuyongnaren",
+  "tags": ["紫微斗数", "命理", "角色设计", "命运", "小说", "剧本", "创作"],
+  "category": "creative-writing",
+  "compatibility": "适用于 WorkBuddy / Claude Code / Cursor / OpenAI Codex 等支持 Agent Skills 的工具。引擎部分需要Node.js环境，角色设计部分需要文件读写权限。",
+  "dependencies": [],
+  "files": {
+    "main": "SKILL.md",
+    "references": [
+      "references/core-engine.js",
+      "references/api-spec.md",
+      "references/test-cases.md",
+      "references/algorithm-corrections.md",
+      "references/命盘数据总库.json",
+      "references/主星吉凶查询表.md",
+      "references/十二宫位解读.md",
+      "references/四化飞星指南.md",
+      "references/角色生成Prompt模板.md"
+    ],
+    "templates": [],
+    "scripts": []
+  },
+  "changelog": {
+    "1.0.0": [
+      "整合 ziwei-engine（算法引擎）",
+      "整合 紫微斗数角色设计（应用层）",
+      "提供双模式：代码调用 + Prompt交互"
+    ]
+  }
+}

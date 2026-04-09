@@ -1,0 +1,7 @@
+{
+  "name": "张岩客奇门遁甲解盘",
+  "version": "1.0.0",
+  "description": "张岩客奇门遁甲解盘，将九宫格截图读取为结构化信息并断事",
+  "author": "wuyongnaren",
+  "entry": "src/index.js"
+}

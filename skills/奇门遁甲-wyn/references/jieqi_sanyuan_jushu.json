@@ -1,0 +1,34 @@
+{
+  "yang": [
+    {"jieqi":"冬至","dun":"阳遁","shang":1,"zhong":7,"xia":4},
+    {"jieqi":"小寒","dun":"阳遁","shang":2,"zhong":8,"xia":5},
+    {"jieqi":"大寒","dun":"阳遁","shang":3,"zhong":9,"xia":6},
+    {"jieqi":"立春","dun":"阳遁","shang":8,"zhong":5,"xia":2},
+    {"jieqi":"雨水","dun":"阳遁","shang":9,"zhong":6,"xia":3},
+    {"jieqi":"惊蛰","dun":"阳遁","shang":1,"zhong":7,"xia":4},
+    {"jieqi":"春分","dun":"阳遁","shang":3,"zhong":9,"xia":6},
+    {"jieqi":"清明","dun":"阳遁","shang":4,"zhong":1,"xia":7},
+    {"jieqi":"谷雨","dun":"阳遁","shang":5,"zhong":2,"xia":8},
+    {"jieqi":"立夏","dun":"阳遁","shang":4,"zhong":1,"xia":7},
+    {"jieqi":"小满","dun":"阳遁","shang":5,"zhong":2,"xia":8},
+    {"jieqi":"芒种","dun":"阳遁","shang":6,"zhong":3,"xia":9}
+  ],
+  "yin": [
+    {"jieqi":"夏至","dun":"阴遁","shang":9,"zhong":3,"xia":6},
+    {"jieqi":"小暑","dun":"阴遁","shang":8,"zhong":2,"xia":5},
+    {"jieqi":"大暑","dun":"阴遁","shang":7,"zhong":1,"xia":4},
+    {"jieqi":"立秋","dun":"阴遁","shang":2,"zhong":5,"xia":8},
+    {"jieqi":"处暑","dun":"阴遁","shang":1,"zhong":4,"xia":7},
+    {"jieqi":"白露","dun":"阴遁","shang":9,"zhong":3,"xia":6},
+    {"jieqi":"秋分","dun":"阴遁","shang":7,"zhong":1,"xia":4},
+    {"jieqi":"寒露","dun":"阴遁","shang":6,"zhong":9,"xia":3},
+    {"jieqi":"霜降","dun":"阴遁","shang":5,"zhong":8,"xia":2},
+    {"jieqi":"立冬","dun":"阴遁","shang":6,"zhong":9,"xia":3},
+    {"jieqi":"小雪","dun":"阴遁","shang":5,"zhong":8,"xia":2},
+    {"jieqi":"大雪","dun":"阴遁","shang":4,"zhong":7,"xia":1}
+  ],
+  "notes": {
+    "source": "User-provided table (2026-03-23)",
+    "fields": {"shang":"上元局号","zhong":"中元局号","xia":"下元局号"}
+  }
+}

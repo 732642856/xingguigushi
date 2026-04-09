@@ -1,0 +1,40 @@
+{
+  "schema_version": "1.0",
+  "name": "军途-wyn",
+  "description": "军事题材创作工具。以兵法体系为底层框架，整合古代/近代/现代军事元素，融合专业编剧方法论，提供从军事题材选择到完整战争故事的全流程创作支持。",
+  "version": "1.0.0",
+  "language": "zh-CN",
+  "category": "creative-writing",
+  "tags": [
+    "军事",
+    "战争",
+    "兵法",
+    "冷兵器",
+    "热兵器",
+    "现代战争",
+    "编剧",
+    "剧情"
+  ],
+  "skill_type": "user",
+  "required_capabilities": [],
+  "files": [
+    "SKILL.md",
+    "references/军事角色原型.md",
+    "references/战斗场景模板库.md",
+    "references/军事冲突库.md",
+    "references/经典战役案例.md",
+    "references/古代军事资料索引.md",
+    "references/近代现代军事资料索引.md",
+    "references/军事术语与台词库.md"
+  ],
+  "dependencies": {
+    "skills": [
+      "screenwriting-master",
+      "世宿情缘-wyn",
+      "八门谋生-wyn",
+      "星轨人生-wyn"
+    ]
+  },
+  "author": "wuyongnaren",
+  "license": "MIT-0"
+}

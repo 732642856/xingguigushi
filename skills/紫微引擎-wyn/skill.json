@@ -1,0 +1,7 @@
+{
+  "name": "紫微斗数完整引擎",
+  "version": "1.0.0",
+  "description": "多派体系融合的紫微斗数排盘算法引擎 v3.0",
+  "author": "wuyongnaren",
+  "entry": "src/index.js"
+}

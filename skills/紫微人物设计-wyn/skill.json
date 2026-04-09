@@ -1,0 +1,7 @@
+{
+  "name": "紫微斗数角色设计",
+  "version": "1.0.0",
+  "description": "基于紫微斗数144种标准命盘，为剧本/小说创作角色人物",
+  "author": "wuyongnaren",
+  "entry": "src/index.js"
+}
