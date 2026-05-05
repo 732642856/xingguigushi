@@ -1,0 +1,597 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>天命珠劫：封神少女传</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'STKaiti', 'KaiTi', 'SimSun', serif;
+            background: #000;
+            color: #fff;
+            overflow: hidden;
+            cursor: none;
+        }
+
+        /* 自定义光标 */
+        #cursor {
+            position: fixed;
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 10000;
+            transition: transform 0.15s ease, border-color 0.3s ease;
+        }
+
+        #cursor.hover {
+            transform: scale(1.5);
+            border-color: rgba(255, 200, 100, 0.9);
+        }
+
+        /* 主容器 */
+        #app {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 场景容器 */
+        .scene {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            transition: opacity 2s ease;
+        }
+
+        .scene.active {
+            opacity: 1;
+        }
+
+        /* 背景层 */
+        .scene-bg {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(0px);
+            transform: scale(1);
+            transition: filter 4s ease, transform 8s ease;
+        }
+
+        .scene.active .scene-bg {
+            animation: kenBurns 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes kenBurns {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.1); }
+        }
+
+        /* 字幕层 */
+        .subtitle {
+            position: absolute;
+            bottom: 15%;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80%;
+            max-width: 900px;
+            text-align: center;
+            font-size: 1.8rem;
+            line-height: 2.2;
+            text-shadow: 0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6);
+            opacity: 0;
+            transition: opacity 1s ease;
+            padding: 20px;
+            background: linear-gradient(to bottom, transparent, rgba(0,0,0,0.4), transparent);
+        }
+
+        .subtitle.show {
+            opacity: 1;
+        }
+
+        /* 隐形热区 */
+        .hotspot {
+            position: absolute;
+            cursor: pointer;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .hotspot::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 0;
+            height: 0;
+            background: radial-gradient(circle, rgba(255,200,100,0.3), transparent);
+            border-radius: 50%;
+            transition: all 0.5s ease;
+        }
+
+        .hotspot:hover::before {
+            width: 150%;
+            height: 150%;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+            50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .hotspot-label {
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1rem;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            text-shadow: 0 0 10px rgba(0,0,0,0.9);
+        }
+
+        .hotspot:hover .hotspot-label {
+            opacity: 1;
+        }
+
+        /* 开始界面 */
+        #start-screen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: linear-gradient(135deg, #1a0a0a 0%, #0a0a1a 100%);
+            z-index: 1000;
+            transition: opacity 2s ease;
+        }
+
+        #start-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .title {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+            text-shadow: 0 0 30px rgba(255,100,100,0.5);
+            animation: titleGlow 3s ease-in-out infinite;
+        }
+
+        @keyframes titleGlow {
+            0%, 100% { text-shadow: 0 0 30px rgba(255,100,100,0.5); }
+            50% { text-shadow: 0 0 50px rgba(255,100,100,0.8); }
+        }
+
+        .subtitle-text {
+            font-size: 1.5rem;
+            margin-bottom: 3rem;
+            opacity: 0.7;
+        }
+
+        .start-btn {
+            padding: 20px 60px;
+            font-size: 1.5rem;
+            background: transparent;
+            border: 2px solid rgba(255,255,255,0.5);
+            color: #fff;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-family: inherit;
+        }
+
+        .start-btn:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,200,100,0.8);
+            transform: scale(1.05);
+        }
+
+        /* 加载提示 */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .loading.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div id="cursor"></div>
+    
+    <div id="app">
+        <!-- 开始界面 -->
+        <div id="start-screen">
+            <h1 class="title">天命珠劫</h1>
+            <p class="subtitle-text">封神少女传</p>
+            <button class="start-btn" onclick="startGame()">触碰进入</button>
+        </div>
+
+        <!-- 场景容器 -->
+        <div id="scenes"></div>
+
+        <!-- 字幕 -->
+        <div class="subtitle" id="subtitle"></div>
+
+        <!-- 加载提示 -->
+        <div class="loading" id="loading">场景加载中...</div>
+    </div>
+
+    <script>
+        // ==================== 全局状态 ====================
+        const State = {
+            currentScene: null,
+            choices: {},
+            audioContext: null,
+            sounds: {},
+            subtitleQueue: [],
+            isTransitioning: false
+        };
+
+        // ==================== 场景数据 ====================
+        const SCENES = {
+            scene01: {
+                id: 'scene01',
+                name: '白泽降临',
+                bg: 'Node_01_门前的异类.png',
+                audio: 'A01全局底层环境氛围循环背景音.mp3',
+                subtitles: [
+                    { text: '商朝末年，朝歌城外', delay: 2000, duration: 3000 },
+                    { text: '少女鹿圆在集市帮父亲卖布，生活平凡', delay: 5000, duration: 4000 },
+                    { text: '夜晚，她做了一个噩梦...', delay: 9000, duration: 3000 },
+                    { text: '巨大的九尾劫魔摧毁城池，无数人惨死', delay: 12000, duration: 4000 },
+                    { text: '梦中有个声音呼唤她的名字', delay: 16000, duration: 3000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_01_a',
+                        label: '相信白泽',
+                        position: { left: '30%', top: '50%', width: '200px', height: '200px' },
+                        target: 'scene02',
+                        delay: 20000
+                    },
+                    {
+                        id: 'choice_01_b',
+                        label: '相信焰',
+                        position: { left: '60%', top: '50%', width: '200px', height: '200px' },
+                        target: 'scene02',
+                        delay: 20000
+                    }
+                ]
+            },
+            scene02: {
+                id: 'scene02',
+                name: '契约的代价',
+                bg: 'Node_D1_溺亡的镜子.png',
+                audio: 'A02Node_01玉佩共鸣触发音.mp3',
+                subtitles: [
+                    { text: '巴美邀请鹿圆和沙耶到她的居所——一座废弃的道观', delay: 2000, duration: 4000 },
+                    { text: '她展示封神少女的日常：用天命珠感知劫魔气息', delay: 6000, duration: 4000 },
+                    { text: '进入"劫境"战斗', delay: 10000, duration: 3000 },
+                    { text: '劫境内部是扭曲的幻象世界...', delay: 13000, duration: 3000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_02_a',
+                        label: '安慰巴美',
+                        position: { left: '40%', top: '60%', width: '200px', height: '200px' },
+                        target: 'scene03',
+                        delay: 18000
+                    },
+                    {
+                        id: 'choice_02_b',
+                        label: '询问焰',
+                        position: { left: '55%', top: '40%', width: '200px', height: '200px' },
+                        target: 'scene03',
+                        delay: 18000
+                    }
+                ]
+            },
+            scene03: {
+                id: 'scene03',
+                name: '沙耶的堕落（上）',
+                bg: 'Node_D2_战死的卷宗.png',
+                audio: 'A03Node_01 : S02黑线灼烧压迫音效.mp3',
+                subtitles: [
+                    { text: '恭介的伤势恶化，医师断言他的手臂已废', delay: 2000, duration: 4000 },
+                    { text: '沙耶崩溃，深夜找到白泽', delay: 6000, duration: 3000 },
+                    { text: '"我愿意付出任何代价，请让恭介的手臂康复！"', delay: 9000, duration: 4000 },
+                    { text: '白泽温和地说："你的愿望我听到了。签订契约吧。"', delay: 13000, duration: 4000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_03_a',
+                        label: '安慰沙耶',
+                        position: { left: '35%', top: '55%', width: '200px', height: '200px' },
+                        target: 'scene04',
+                        delay: 18000
+                    },
+                    {
+                        id: 'choice_03_b',
+                        label: '净化天命珠',
+                        position: { left: '60%', top: '45%', width: '200px', height: '200px' },
+                        target: 'scene04',
+                        delay: 18000
+                    }
+                ]
+            },
+            scene04: {
+                id: 'scene04',
+                name: '巴美之死',
+                bg: 'Node_D3c_共振三角.png',
+                audio: 'A04Node_S02 : S03记忆闪回事件音效.mp3',
+                subtitles: [
+                    { text: '为了转移沙耶的注意力，巴美提议四人一起围剿一只强大的劫魔', delay: 2000, duration: 5000 },
+                    { text: '战斗顺利，巴美信心满满...', delay: 7000, duration: 3000 },
+                    { text: '话音未落，劫魔突然分裂，露出真正的本体', delay: 10000, duration: 4000 },
+                    { text: '它瞬间吞噬了巴美的头颅', delay: 14000, duration: 3000 },
+                    { text: '鲜血喷涌...', delay: 17000, duration: 2000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_04_a',
+                        label: '质问白泽',
+                        position: { left: '45%', top: '50%', width: '200px', height: '200px' },
+                        target: 'scene05',
+                        delay: 20000
+                    }
+                ]
+            },
+            scene05: {
+                id: 'scene05',
+                name: '沙耶的堕落（下）',
+                bg: 'BG-09 Node_X2 宣纸河.png',
+                audio: 'AUD-10Node_X2宣纸河氛围.mp3',
+                subtitles: [
+                    { text: '巴美死后，沙耶精神崩溃', delay: 2000, duration: 3000 },
+                    { text: '她疯狂战斗，用自残式的打法斩杀劫魔', delay: 5000, duration: 4000 },
+                    { text: '她的天命珠越来越黑...', delay: 9000, duration: 3000 },
+                    { text: '深夜，沙耶独自坐在河边', delay: 12000, duration: 3000 },
+                    { text: '她的天命珠完全碎裂，黑色的瘴气涌出', delay: 15000, duration: 4000 },
+                    { text: '人鱼劫魔诞生', delay: 19000, duration: 2000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_05_a',
+                        label: '许愿复活',
+                        position: { left: '40%', top: '55%', width: '200px', height: '200px' },
+                        target: 'scene06',
+                        delay: 22000
+                    },
+                    {
+                        id: 'choice_05_b',
+                        label: '质问白泽',
+                        position: { left: '55%', top: '45%', width: '200px', height: '200px' },
+                        target: 'scene06',
+                        delay: 22000
+                    }
+                ]
+            },
+            scene06: {
+                id: 'scene06',
+                name: '焰的告白',
+                bg: 'BG-10 Node_Y4 皮影戏台.png',
+                audio: 'AUD-11Node_Y4皮影戏.mp3',
+                subtitles: [
+                    { text: '沙耶和杏子死后，鹿圆陷入深深的自责', delay: 2000, duration: 4000 },
+                    { text: '焰找到她，决定坦白一切', delay: 6000, duration: 3000 },
+                    { text: '"我要告诉你真相。在第一个时间线中，我是普通人，你是封神少女。"', delay: 9000, duration: 5000 },
+                    { text: '"我已经轮回了一百次。每次都失败。"', delay: 14000, duration: 4000 },
+                    { text: '"因为你是我最重要的人。"', delay: 18000, duration: 3000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_06_a',
+                        label: '决定签约',
+                        position: { left: '45%', top: '50%', width: '200px', height: '200px' },
+                        target: 'scene07',
+                        delay: 22000
+                    },
+                    {
+                        id: 'choice_06_b',
+                        label: '试图逃离',
+                        position: { left: '55%', top: '50%', width: '200px', height: '200px' },
+                        target: 'scene07',
+                        delay: 22000
+                    }
+                ]
+            },
+            scene07: {
+                id: 'scene07',
+                name: '真相与抉择',
+                bg: 'BG-15 Node_Y10 真相空间 .png',
+                audio: 'AUD-16Node_Y10真相揭露.mp3',
+                subtitles: [
+                    { text: '白泽揭示终极真相：封神少女系统是天庭设计的"情感收割机制"', delay: 2000, duration: 5000 },
+                    { text: '"牺牲少数拯救多数，这是必要的恶。"', delay: 7000, duration: 4000 },
+                    { text: '焰的天命珠突然碎裂——她即将化为劫魔', delay: 11000, duration: 4000 },
+                    { text: '鹿圆抱住焰："不，这次轮到我保护你了。"', delay: 15000, duration: 4000 },
+                    { text: '"我的愿望是——消除所有封神少女入魔的命运。"', delay: 19000, duration: 4000 }
+                ],
+                hotspots: [
+                    {
+                        id: 'choice_07_a',
+                        label: '接受牺牲',
+                        position: { left: '50%', top: '50%', width: '200px', height: '200px' },
+                        target: 'scene08',
+                        delay: 24000
+                    }
+                ]
+            },
+            scene08: {
+                id: 'scene08',
+                name: '希望之神',
+                bg: 'BG-16 Node_Y11 终极抉择.png',
+                audio: 'AUD-17Node_Y11终极抉择A.mp3',
+                subtitles: [
+                    { text: '鹿圆的愿望生效', delay: 2000, duration: 3000 },
+                    { text: '她的身体化为无数光点，散布于时空之中', delay: 5000, duration: 4000 },
+                    { text: '她超越了物质存在，成为新的天道法则——"希望之神"', delay: 9000, duration: 5000 },
+                    { text: '所有封神少女在即将入魔的瞬间，都会被鹿圆接引', delay: 14000, duration: 5000 },
+                    { text: '但代价是鹿圆从历史中被抹除', delay: 19000, duration: 4000 },
+                    { text: '只有焰因为时间回溯的能力，保留了记忆', delay: 23000, duration: 4000 },
+                    { text: '焰看着天空："我会继续战斗，守护你用牺牲换来的世界。"', delay: 27000, duration: 5000 },
+                    { text: '那是鹿圆的希望，永恒地守护着她们。', delay: 32000, duration: 4000 }
+                ],
+                hotspots: []
+            }
+        };
+
+        // ==================== 音频系统 ====================
+        function initAudio() {
+            State.audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        function playAudio(filename) {
+            const audio = new Audio(filename);
+            audio.loop = true;
+            audio.volume = 0.3;
+            audio.play().catch(e => console.log('Audio play failed:', e));
+            return audio;
+        }
+
+        // ==================== 字幕系统 ====================
+        function showSubtitles(subtitles) {
+            const subtitleEl = document.getElementById('subtitle');
+            subtitles.forEach(sub => {
+                setTimeout(() => {
+                    subtitleEl.textContent = sub.text;
+                    subtitleEl.classList.add('show');
+                    setTimeout(() => {
+                        subtitleEl.classList.remove('show');
+                    }, sub.duration);
+                }, sub.delay);
+            });
+        }
+
+        // ==================== 场景切换 ====================
+        function loadScene(sceneId) {
+            if (State.isTransitioning) return;
+            State.isTransitioning = true;
+
+            const scene = SCENES[sceneId];
+            if (!scene) {
+                console.error('Scene not found:', sceneId);
+                return;
+            }
+
+            // 淡出当前场景
+            const currentScenes = document.querySelectorAll('.scene.active');
+            currentScenes.forEach(s => s.classList.remove('active'));
+
+            // 创建新场景
+            setTimeout(() => {
+                const scenesContainer = document.getElementById('scenes');
+                scenesContainer.innerHTML = '';
+
+                const sceneEl = document.createElement('div');
+                sceneEl.className = 'scene';
+                sceneEl.id = scene.id;
+
+                // 背景
+                const bgEl = document.createElement('div');
+                bgEl.className = 'scene-bg';
+                bgEl.style.backgroundImage = `url('${scene.bg}')`;
+                sceneEl.appendChild(bgEl);
+
+                // 热区
+                scene.hotspots.forEach(hotspot => {
+                    const hotspotEl = document.createElement('div');
+                    hotspotEl.className = 'hotspot';
+                    hotspotEl.id = hotspot.id;
+                    Object.assign(hotspotEl.style, hotspot.position);
+                    
+                    const label = document.createElement('div');
+                    label.className = 'hotspot-label';
+                    label.textContent = hotspot.label;
+                    hotspotEl.appendChild(label);
+
+                    hotspotEl.onclick = () => {
+                        State.choices[scene.id] = hotspot.id;
+                        loadScene(hotspot.target);
+                    };
+
+                    // 延迟显示热区
+                    setTimeout(() => {
+                        hotspotEl.style.opacity = '1';
+                    }, hotspot.delay);
+
+                    sceneEl.appendChild(hotspotEl);
+                });
+
+                scenesContainer.appendChild(sceneEl);
+
+                // 激活场景
+                setTimeout(() => {
+                    sceneEl.classList.add('active');
+                    State.isTransitioning = false;
+                }, 100);
+
+                // 播放音频
+                if (scene.audio) {
+                    if (State.currentAudio) {
+                        State.currentAudio.pause();
+                    }
+                    State.currentAudio = playAudio(scene.audio);
+                }
+
+                // 显示字幕
+                showSubtitles(scene.subtitles);
+
+                State.currentScene = sceneId;
+            }, 2000);
+        }
+
+        // ==================== 自定义光标 ====================
+        const cursor = document.getElementById('cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
+
+        document.addEventListener('mouseover', (e) => {
+            if (e.target.classList.contains('hotspot') || e.target.classList.contains('start-btn')) {
+                cursor.classList.add('hover');
+            } else {
+                cursor.classList.remove('hover');
+            }
+        });
+
+        // ==================== 开始游戏 ====================
+        function startGame() {
+            initAudio();
+            document.getElementById('start-screen').classList.add('hidden');
+            setTimeout(() => {
+                loadScene('scene01');
+            }, 2000);
+        }
+
+        // ==================== 初始化 ====================
+        window.addEventListener('load', () => {
+            console.log('天命珠劫：封神少女传 已加载');
+        });
+    </script>
+</body>
+</html>

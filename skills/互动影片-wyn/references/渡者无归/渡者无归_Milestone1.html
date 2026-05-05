@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>渡者无归</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body {
+  width: 100%; height: 100%;
+  background: #0a0a0a;
+  overflow: hidden;
+  font-family: "Noto Serif SC", "Source Han Serif SC", "SimSun", serif;
+  color: #dcc8b0;
+  cursor: none;
+}
+
+/* Cursor glow */
+#cursor-glow {
+  position: fixed;
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(160,220,210,0.25) 0%, transparent 70%);
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  z-index: 9999;
+  mix-blend-mode: screen;
+  transition: background 0.3s ease;
+}
+#cursor-glow.warm {
+  background: radial-gradient(circle, rgba(220,180,140,0.3) 0%, transparent 70%);
+}
+#cursor-glow.danger {
+  background: radial-gradient(circle, rgba(180,40,40,0.35) 0%, transparent 70%);
+}
+
+/* Scene system */
+.scene {
+  position: fixed;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease-in-out, filter 2s ease;
+  z-index: 1;
+}
+.scene.active {
+  opacity: 1;
+  pointer-events: auto;
+  z-index: 10;
+}
+.scene .bg {
+  position: absolute;
+  inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  filter: brightness(0.85) contrast(1.1);
+}
+
+/* Start screen */
+#start-screen {
+  position: fixed;
+  inset: 0;
+  background: #0a0a0a;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  transition: opacity 1.5s ease;
+}
+#start-screen.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+.start-title {
+  font-size: clamp(2rem, 6vw, 4rem);
+  letter-spacing: 0.3em;
+  color: #dcc8b0;
+  text-shadow: 0 0 30px rgba(220,200,180,0.2);
+  margin-bottom: 0.5em;
+}
+.start-sub {
+  font-size: clamp(0.8rem, 2vw, 1.2rem);
+  color: #8a7a6a;
+  letter-spacing: 0.15em;
+  margin-bottom: 3em;
+}
+.start-hint {
+  font-size: 0.9rem;
+  color: #5a4a3a;
+  animation: pulse 2s ease-in-out infinite;
+  cursor: pointer;
+  padding: 1em 2em;
+  border: 1px solid rgba(139,0,0,0.3);
+}
+@keyframes pulse {
+  0%,100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* Hotzones */
+.hotzone {
+  position: absolute;
+  background: transparent;
+  cursor: pointer;
+  z-index: 20;
+}
+.hotzone::before {
+  content: "";
+  position: absolute;
+  inset: -10px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.4s ease, box-shadow 0.4s ease;
+}
+.hotzone:hover::before {
+  opacity: 1;
+  box-shadow: 0 0 40px 15px rgba(160, 220, 210, 0.25),
+              inset 0 0 30px rgba(160, 220, 210, 0.1);
+}
+.hotzone.locked:hover::before {
+  box-shadow: 0 0 40px 15px rgba(139, 0, 0, 0.2),
+              inset 0 0 30px rgba(139, 0, 0, 0.1);
+}
+.hotzone.disabled {
+  pointer-events: none;
+}
+
+/* Subtitle system */
+#subtitle-container {
+  position: fixed;
+  bottom: 8vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 800px;
+  z-index: 100;
+  pointer-events: none;
+  text-align: center;
+}
+.subtitle-main {
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  line-height: 1.8;
+  letter-spacing: 0.05em;
+  text-shadow: 0 2px 10px rgba(0,0,0,0.9), 0 0 20px rgba(0,0,0,0.8);
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  min-height: 1.8em;
+}
+.subtitle-main.show { opacity: 1; }
+.subtitle-system {
+  color: #a0c0e0;
+  text-shadow: 0 0 8px rgba(100,150,255,0.6), 0 2px 10px rgba(0,0,0,0.9);
+  letter-spacing: 0.08em;
+}
+.subtitle-human {
+  color: #dcc8b0;
+  text-shadow: 0 0 8px rgba(220,180,140,0.5), 0 2px 10px rgba(0,0,0,0.9);
+}
+.subtitle-aying {
+  color: #c8a090;
+  text-shadow: 0 0 10px rgba(200,100,80,0.4), 0 2px 10px rgba(0,0,0,0.9);
+}
+.subtitle-appendix {
+  font-size: 0.75em;
+  color: rgba(200, 160, 160, 0.35);
+  margin-top: 0.5em;
+  text-shadow: 0 0 5px rgba(0,0,0,0.9);
+  opacity: 0;
+  transition: opacity 0.8s ease 0.6s;
+}
+.subtitle-appendix.show { opacity: 1; }
+
+/* Ember particles */
+.ember {
+  position: absolute;
+  width: 3px; height: 3px;
+  background: rgba(255, 100, 20, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  animation: ember-rise 3s ease-out forwards;
+}
+@keyframes ember-rise {
+  0% { transform: translateY(0) scale(1); opacity: 0.8; }
+  100% { transform: translateY(-120px) scale(0.1); opacity: 0; }
+}
+
+/* Scanline overlay */
+#scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px);
+  pointer-events: none;
+  z-index: 50;
+}
+
+/* Vignette */
+#vignette {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.6) 100%);
+  pointer-events: none;
+  z-index: 40;
+}
+
+/* Progress bar for internalization */
+#progress-bar {
+  position: fixed;
+  bottom: 5vh;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  height: 3px;
+  background: rgba(220, 180, 140, 0.15);
+  z-index: 100;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+#progress-bar.show { opacity: 1; }
+#progress-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, rgba(220,180,140,0.6), rgba(200,160,100,0.9));
+  transition: width 0.1s linear;
+}
+
+/* Chest glow for internalization */
+#chest-glow {
+  position: absolute;
+  width: 120px;
+  height: 160px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse, rgba(240,220,200,0.4) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 15;
+  filter: blur(8px);
+}
+
+/* System glitch flash */
+@keyframes glitch-flash {
+  0%, 100% { opacity: 0; }
+  10% { opacity: 0.8; }
+  20% { opacity: 0; }
+  30% { opacity: 0.5; }
+  40% { opacity: 0; }
+}
+.glitch-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(100, 150, 200, 0.1);
+  pointer-events: none;
+  z-index: 60;
+  opacity: 0;
+}
+.glitch-overlay.active {
+  animation: glitch-flash 0.5s ease-out;
+}
+
+/* Memory double vision */
+#double-vision {
+  position: absolute;
+  inset: 0;
+  background: url('Node_S02_玉碎之问.png');
+  background-size: cover;
+  opacity: 0;
+  filter: blur(4px) hue-rotate(180deg);
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+  mix-blend-mode: screen;
+}
+
+/* End screen */
+#node-end .end-content {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #0a0a0a 0%, #1a1510 50%, #0a0a0a 100%);
+}
+.end-line {
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  color: #dcc8b0;
+  text-shadow: 0 0 20px rgba(220,200,180,0.2);
+  letter-spacing: 0.2em;
+  margin: 0.5em 0;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 1.5s ease;
+}
+.end-line.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+.end-sub {
+  font-size: 0.9rem;
+  color: #6a5a4a;
+  margin-top: 2em;
+  letter-spacing: 0.1em;
+}
+
+/* Mobile vibration feedback via visual shake */
+@keyframes screen-shake {
+  0%, 100% { transform: translate(0,0); }
+  25% { transform: translate(2px, -2px); }
+  50% { transform: translate(-2px, 2px); }
+  75% { transform: translate(2px, 2px); }
+}
+.screen-shake {
+  animation: screen-shake 0.15s ease-out;
+}
+
+/* Node 01 specific overlays */
+#node-01 .blue-flame {
+  position: absolute;
+  width: 100px; height: 150px;
+  background: radial-gradient(ellipse at bottom, rgba(100,180,255,0.4) 0%, transparent 60%);
+  filter: blur(10px);
+  animation: flame-flicker 3s ease-in-out infinite;
+}
+@keyframes flame-flicker {
+  0%, 100% { opacity: 0.6; transform: scaleY(1); }
+  50% { opacity: 0.9; transform: scaleY(1.1); }
+}
+
+/* Hotzone label hints (fade in on hover) */
+.hotzone-label {
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem;
+  color: rgba(220, 200, 180, 0);
+  white-space: nowrap;
+  letter-spacing: 0.1em;
+  transition: color 0.4s ease;
+  pointer-events: none;
+}
+.hotzone:hover .hotzone-label {
+  color: rgba(220, 200, 180, 0.5);
+}
+
+/* Grayscale transition for mood shifts */
+.grayscale-in {
+  filter: grayscale(70%) brightness(0.7) !important;
+}
+.grayscale-out {
+  filter: grayscale(0%) brightness(0.85) !important;
+}
+</style>
+</head>
+<body>
+
+<!-- Cursor glow -->
+<div id="cursor-glow"></div>
+
+<!-- Overlays -->
+<div id="scanlines"></div>
+<div id="vignette"></div>
+<div class="glitch-overlay" id="glitch-overlay"></div>
+
+<!-- Progress bar (for internalization) -->
+<div id="progress-bar"><div id="progress-bar-fill"></div></div>
+
+<!-- Start Screen -->
+<div id="start-screen">
+  <div class="start-title">渡者无归</div>
+  <div class="start-sub">一个关于记忆、罪与轮回的互动叙事</div>
+  <div class="start-hint" onclick="startExperience()">点击任意处进入墓室</div>
+</div>
+
+<!-- ========== NODE 01: 门前的异类 ========== -->
+<div id="node-01" class="scene">
+  <img class="bg" src="Node_01_门前的异类.png" alt="">
+  <div class="blue-flame" style="left:5%; bottom:10%;"></div>
+  <div class="blue-flame" style="right:5%; bottom:10%;"></div>
+
+  <!-- Hotzone A: 强行推入门中 (Center - Door/Mural) -->
+  <div class="hotzone locked" data-action="A" style="top:15%; left:35%; width:30%; height:60%;">
+    <div class="hotzone-label">推入门中</div>
+  </div>
+
+  <!-- Hotzone B: 扣下信物，质问亡魂 (Right - 阿缨) -->
+  <div class="hotzone" data-action="B" style="top:45%; left:55%; width:35%; height:45%;">
+    <div class="hotzone-label">扣下信物</div>
+  </div>
+
+  <!-- Hotzone C: 试图一起冲入门中 (Center-bottom) -->
+  <div class="hotzone locked" data-action="C" style="top:60%; left:40%; width:20%; height:30%;">
+    <div class="hotzone-label">一起冲门</div>
+  </div>
+</div>
+
+<!-- ========== NODE S02: 玉碎之问 ========== -->
+<div id="node-s02" class="scene">
+  <img class="bg" src="Node_S02_玉碎之问.png" alt="">
+
+  <!-- Hotzone B1: 玉佩中心 (Center) -->
+  <div class="hotzone locked" data-action="B1" style="top:25%; left:40%; width:20%; height:25%;">
+    <div class="hotzone-label">追问我是谁</div>
+  </div>
+
+  <!-- Hotzone B2: 阿缨面容 (Left) -->
+  <div class="hotzone" data-action="B2" style="top:15%; left:10%; width:35%; height:65%;">
+    <div class="hotzone-label">追问我们的事</div>
+  </div>
+
+  <!-- Hotzone B3: 壁画门缝 (Upper right) -->
+  <div class="hotzone locked" data-action="B3" style="top:10%; left:60%; width:35%; height:45%;">
+    <div class="hotzone-label">追问大墓本质</div>
+  </div>
+
+  <!-- Hotzone B4: 主角左手 (Bottom right) -->
+  <div class="hotzone locked" data-action="B4" style="top:60%; left:65%; width:30%; height:35%;">
+    <div class="hotzone-label">丢弃玉佩</div>
+  </div>
+</div>
+
+<!-- ========== NODE S02-2c: 共犯·内化 ========== -->
+<div id="node-s02-2c" class="scene">
+  <img class="bg" src="Node_S02_玉碎之问.png" alt="" id="s02-2c-bg">
+  <div id="double-vision"></div>
+  <div id="chest-glow" style="left:65%; top:40%;"></div>
+
+  <!-- Chest press zone -->
+  <div class="hotzone" id="chest-zone" style="top:35%; left:60%; width:25%; height:35%;">
+    <div class="hotzone-label">按住胸口</div>
+  </div>
+</div>
+
+<!-- ========== END SCREEN ========== -->
+<div id="node-end" class="scene">
+  <div class="end-content">
+    <div class="end-line" id="end-line-1">她不再是鬼。</div>
+    <div class="end-line" id="end-line-2">她是你每吸一口气都要经过的提醒。</div>
+    <div class="end-line" id="end-line-3">系统死机。汉代层开启。</div>
+    <div class="end-sub" style="margin-top:3em; opacity:0; transition:opacity 2s ease 4s;" id="end-restart">
+      [ 第一批体验结束 · 后续：汉骨 / 共振三角 / 歌姬剧场 ]
+    </div>
+  </div>
+</div>
+
+<!-- Subtitles -->
+<div id="subtitle-container">
+  <div class="subtitle-main" id="subtitle-main"></div>
+  <div class="subtitle-appendix" id="subtitle-appendix"></div>
+</div>
+
+<!-- Audio elements -->
+<audio id="a01" src="A01全局底层环境氛围循环背景音.mp3" loop preload="auto"></audio>
+<audio id="a02" src="A02Node_01玉佩共鸣触发音.mp3" preload="auto"></audio>
+<audio id="a03" src="A03Node_01 : S02黑线灼烧压迫音效.mp3" preload="auto"></audio>
+<audio id="a04" src="A04Node_S02 : S03记忆闪回事件音效.mp3" preload="auto"></audio>
+<audio id="a05" src="A05Node_S03汉骨ambience循环背景音.mp3" loop preload="auto"></audio>
+<audio id="a06" src="A06Node_D1溺亡水滴亡魂特征音.mp3" loop preload="auto"></audio>
+<audio id="a07" src="A07Node_D3c1剧场环境循环背景音.mp3" loop preload="auto"></audio>
+<audio id="a08" src="A08Node_D3c1歌姬人声人声处理参数.mp3" preload="auto"></audio>
+<audio id="a09" src="A09Node_S04终幕仪式崩解事件音.mp3" preload="auto"></audio>
+
+<script>
+// ========== STATE ==========
+const State = {
+  System_Control: 3,
+  Humanity_Memory: 0,
+  Ferryman_Name: "unknown",
+  Jade_Fragment: false,
+  Aying_Existence: 3,
+  Aying_Internalized: false,
+  Guilt_Memory: 0,
+  currentNode: null
+};
+
+// ========== CURSOR ==========
+const cursorGlow = document.getElementById("cursor-glow");
+document.addEventListener("mousemove", (e) => {
+  cursorGlow.style.left = e.clientX + "px";
+  cursorGlow.style.top = e.clientY + "px";
+});
+
+// ========== AUDIO ENGINE ==========
+const audio = {
+  a01: document.getElementById("a01"),
+  a02: document.getElementById("a02"),
+  a03: document.getElementById("a03"),
+  a04: document.getElementById("a04"),
+  a05: document.getElementById("a05"),
+  a06: document.getElementById("a06"),
+  a07: document.getElementById("a07"),
+  a08: document.getElementById("a08"),
+  a09: document.getElementById("a09")
+};
+
+function playAudio(id, volume = 1.0) {
+  const el = audio[id];
+  if (!el) return;
+  el.volume = volume;
+  el.currentTime = 0;
+  const p = el.play();
+  if (p) p.catch(() => {});
+}
+
+function fadeAudio(id, targetVol, duration = 2000) {
+  const el = audio[id];
+  if (!el) return;
+  const start = el.volume;
+  const startTime = performance.now();
+  function tick(now) {
+    const t = Math.min((now - startTime) / duration, 1);
+    el.volume = start + (targetVol - start) * t;
+    if (t < 1) requestAnimationFrame(tick);
+    else if (targetVol === 0) { el.pause(); el.currentTime = 0; }
+  }
+  requestAnimationFrame(tick);
+}
+
+function crossfade(fromId, toId, duration = 3000) {
+  fadeAudio(fromId, 0, duration);
+  setTimeout(() => playAudio(toId, 0), 100);
+  setTimeout(() => fadeAudio(toId, 1, duration), 200);
+}
+
+// ========== SUBTITLE ENGINE ==========
+const subMain = document.getElementById("subtitle-main");
+const subAppendix = document.getElementById("subtitle-appendix");
+let subTimer = null;
+let subQueue = [];
+let isPlayingQueue = false;
+
+function showSubtitle(text, opts = {}) {
+  clearTimeout(subTimer);
+  subMain.className = "subtitle-main show " + (opts.class || "subtitle-human");
+  subMain.textContent = text;
+
+  subAppendix.classList.remove("show");
+  subAppendix.textContent = "";
+
+  if (opts.appendix) {
+    setTimeout(() => {
+      subAppendix.textContent = opts.appendix;
+      subAppendix.classList.add("show");
+    }, 800);
+  }
+
+  const dur = opts.duration || (opts.appendix ? 6000 : 4500);
+  subTimer = setTimeout(() => {
+    subMain.classList.remove("show");
+    subAppendix.classList.remove("show");
+    if (opts.onEnd) opts.onEnd();
+  }, dur);
+}
+
+function queueSubtitles(list) {
+  subQueue = list;
+  playNextSubtitle();
+}
+
+function playNextSubtitle() {
+  if (subQueue.length === 0) { isPlayingQueue = false; return; }
+  isPlayingQueue = true;
+  const item = subQueue.shift();
+  showSubtitle(item.text, {
+    class: item.class,
+    appendix: item.appendix,
+    duration: item.duration,
+    onEnd: () => {
+      if (item.delayNext) {
+        setTimeout(playNextSubtitle, item.delayNext);
+      } else {
+        playNextSubtitle();
+      }
+    }
+  });
+}
+
+// ========== SCENE SYSTEM ==========
+function switchScene(sceneId, opts = {}) {
+  const current = document.querySelector(".scene.active");
+  const next = document.getElementById(sceneId);
+  if (!next) return;
+
+  State.currentNode = sceneId;
+
+  if (current) {
+    current.classList.remove("active");
+    current.style.opacity = "0";
+    current.style.pointerEvents = "none";
+  }
+
+  next.style.opacity = "0";
+  next.style.pointerEvents = "auto";
+  next.classList.add("active");
+
+  requestAnimationFrame(() => {
+    next.style.opacity = "1";
+  });
+
+  if (opts.onEnter) setTimeout(opts.onEnter, opts.delay || 800);
+}
+
+// ========== START ==========
+function startExperience() {
+  const startScreen = document.getElementById("start-screen");
+  startScreen.classList.add("hidden");
+
+  // Initialize audio context on user gesture
+  Object.values(audio).forEach(a => {
+    a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+  });
+
+  setTimeout(() => {
+    startScreen.style.display = "none";
+    enterNode01();
+  }, 1500);
+}
+
+// ========== NODE 01: 门前的异类 ==========
+function enterNode01() {
+  switchScene("node-01", { delay: 1000, onEnter: () => {
+    playAudio("a01", 0.6);
+    playAudio("a02", 0.7);
+
+    queueSubtitles([
+      { text: "亡魂编号：丁亥七三。死因：缢。罪业评级：待定。前缘：未清。", class: "subtitle-system", duration: 5000 },
+      { text: "入此门者，诸般执念，皆为废土。前缘尽断，不可回头。", class: "subtitle-system", delayNext: 500 },
+      { text: "持衡者...这半块双鱼佩，你当真...不认得了？", class: "subtitle-aying", duration: 5000 },
+      { text: "景和二年，霜降。你送我出燕州城门，说待北境战事平息，便用这整玉作聘。", class: "subtitle-aying", duration: 6000 },
+      { text: "可你食言了。", class: "subtitle-aying", duration: 3000 },
+      { text: "......", class: "subtitle-human", delayNext: 800, duration: 2000 },
+      { text: "玉佩...断裂的触感。我明明答应过要回去的...", class: "subtitle-human", appendix: "废土里会长出绳子。绳子会缠住脖子。", duration: 6000 }
+    ]);
+  }});
+}
+
+// Node 01 hotzones
+document.querySelectorAll("#node-01 .hotzone").forEach(hz => {
+  hz.addEventListener("mouseenter", () => {
+    const action = hz.dataset.action;
+    if (action === "B") {
+      cursorGlow.classList.add("warm");
+      playAudio("a02", 0.3);
+      spawnEmbers(hz);
+    } else {
+      cursorGlow.classList.add("danger");
+    }
+  });
+  hz.addEventListener("mouseleave", () => {
+    cursorGlow.className = "";
+  });
+  hz.addEventListener("click", () => {
+    const action = hz.dataset.action;
+    if (action === "A") {
+      showSubtitle("系统锁定：此路径需先完成因果信物绑定。", { class: "subtitle-system" });
+      triggerGlitch();
+    } else if (action === "B") {
+      enterNodeS02();
+    } else if (action === "C") {
+      showSubtitle("系统警告：摆渡人不可踏入轮回通道。", { class: "subtitle-system" });
+      triggerGlitch();
+      if (navigator.vibrate) navigator.vibrate([50, 30, 50]);
+    }
+  });
+});
+
+function spawnEmbers(element) {
+  const rect = element.getBoundingClientRect();
+  for (let i = 0; i < 5; i++) {
+    const ember = document.createElement("div");
+    ember.className = "ember";
+    ember.style.left = (rect.left + Math.random() * rect.width) + "px";
+    ember.style.top = (rect.top + rect.height - 10) + "px";
+    ember.style.animationDelay = (Math.random() * 1) + "s";
+    document.body.appendChild(ember);
+    setTimeout(() => ember.remove(), 3000);
+  }
+}
+
+function triggerGlitch() {
+  const go = document.getElementById("glitch-overlay");
+  go.classList.remove("active");
+  void go.offsetWidth;
+  go.classList.add("active");
+  setTimeout(() => go.classList.remove("active"), 600);
+}
+
+// ========== NODE S02: 玉碎之问 ==========
+function enterNodeS02() {
+  State.Humanity_Memory += 1;
+  State.System_Control -= 1;
+  State.Jade_Fragment = true;
+
+  crossfade("a01", "a03", 3000);
+
+  switchScene("node-s02", { delay: 1200, onEnter: () => {
+    queueSubtitles([
+      { text: "亡魂编号：戊子一二。死因：缢。罪业评级：待定。前缘：未清。", class: "subtitle-system", duration: 4500 },
+      { text: "入此门者，诸般执念，皆为废土。前缘尽断，不可回头。", class: "subtitle-system", delayNext: 300 },
+      { text: "景和三年春，你亲定的卷宗：'民女阿缨，抗粮滋事，畏罪自缢。'", class: "subtitle-aying", duration: 6000 },
+      { text: "你在卷宗上按了指印...可你明明知道，我是被他们硬押上城楼挂起来的。", class: "subtitle-aying", duration: 7000 },
+      { text: "你的指印，到现在还浸着我的血。", class: "subtitle-aying", duration: 4000 },
+      { text: "我想起来了。不是全部。是足够的。足够让我恶心。", class: "subtitle-human", appendix: "废土里会长出绳子。绳子会缠住脖子。脖子会向上看。", delayNext: 1000, duration: 5000 }
+    ]);
+  }});
+}
+
+// Node S02 hotzones
+document.querySelectorAll("#node-s02 .hotzone").forEach(hz => {
+  hz.addEventListener("mouseenter", () => {
+    const action = hz.dataset.action;
+    if (action === "B2") {
+      cursorGlow.classList.add("warm");
+      playAudio("a04", 0.4);
+      document.getElementById("double-vision").style.opacity = "0.3";
+    } else {
+      cursorGlow.classList.add("danger");
+    }
+  });
+  hz.addEventListener("mouseleave", () => {
+    cursorGlow.className = "";
+    document.getElementById("double-vision").style.opacity = "0";
+  });
+  hz.addEventListener("click", () => {
+    const action = hz.dataset.action;
+    if (action === "B2") {
+      enterNodeS02_2c();
+    } else if (action === "B1") {
+      showSubtitle("玉佩丝线颤动，但鱼尾轮廓停滞——需要更多记忆触发。", { class: "subtitle-system" });
+    } else if (action === "B3") {
+      showSubtitle("系统警告：汉代层权限不足。请先完成因果绑定。", { class: "subtitle-system" });
+      triggerGlitch();
+    } else if (action === "B4") {
+      showSubtitle("系统提示：丢弃信物将导致记忆冻结。", { class: "subtitle-system" });
+    }
+  });
+});
+
+// ========== NODE S02-2c: 共犯·内化 ==========
+function enterNodeS02_2c() {
+  State.Humanity_Memory += 2;
+  State.Guilt_Memory = 2;
+  State.Aying_Existence = 0;
+  State.Aying_Internalized = true;
+  State.System_Control -= 2;
+
+  fadeAudio("a03", 0, 2000);
+
+  switchScene("node-s02-2c", { delay: 1000, onEnter: () => {
+    const bg = document.getElementById("s02-2c-bg");
+    bg.style.filter = "brightness(0.5) contrast(1.3) saturate(0.6)";
+
+    showSubtitle("指印我不擦了。门我也不进了。", {
+      class: "subtitle-human",
+      duration: 3000,
+      onEnd: () => {
+        showSubtitle("你留在这里——不是作为鬼，是作为我的肺。", {
+          class: "subtitle-human",
+          duration: 4000,
+          onEnd: () => {
+            showSubtitle("我每吸一口气，都要经过你的提醒。", {
+              class: "subtitle-human",
+              duration: 4000,
+              onEnd: () => startInternalization()
+            });
+          }
+        });
+      }
+    });
+  }});
+}
+
+// Internalization press-and-hold mechanic
+let holdStart = 0;
+let holdProgress = 0;
+let holdAnim = null;
+let isHolding = false;
+
+const chestZone = document.getElementById("chest-zone");
+const chestGlow = document.getElementById("chest-glow");
+const progressBar = document.getElementById("progress-bar");
+const progressFill = document.getElementById("progress-bar-fill");
+
+function startHold(e) {
+  if (e) e.preventDefault();
+  isHolding = true;
+  holdStart = Date.now();
+  progressBar.classList.add("show");
+  chestGlow.style.opacity = "0.3";
+  updateHold();
+
+  // Subtitle guidance
+  showSubtitle("按住胸口。把她按进去。", { class: "subtitle-aying", duration: 3000 });
+}
+
+function updateHold() {
+  if (!isHolding) return;
+  const elapsed = Date.now() - holdStart;
+  holdProgress = Math.min(elapsed / 2500, 1);
+
+  progressFill.style.width = (holdProgress * 100) + "%";
+  chestGlow.style.opacity = 0.3 + holdProgress * 0.5;
+
+  // Screen shake intensifies
+  if (holdProgress > 0.7) {
+    document.body.classList.add("screen-shake");
+    if (navigator.vibrate) navigator.vibrate([20, 20]);
+  }
+
+  if (holdProgress < 1) {
+    holdAnim = requestAnimationFrame(updateHold);
+  } else {
+    completeInternalization();
+  }
+}
+
+function endHold() {
+  if (!isHolding) return;
+  isHolding = false;
+  cancelAnimationFrame(holdAnim);
+  document.body.classList.remove("screen-shake");
+
+  if (holdProgress < 1) {
+    // Reset
+    holdProgress = 0;
+    progressFill.style.width = "0%";
+    chestGlow.style.opacity = "0";
+    progressBar.classList.remove("show");
+    showSubtitle("不够。再用力。", { class: "subtitle-aying", duration: 2000 });
+  }
+}
+
+function startInternalization() {
+  chestZone.addEventListener("mousedown", startHold);
+  chestZone.addEventListener("touchstart", startHold, { passive: false });
+  document.addEventListener("mouseup", endHold);
+  document.addEventListener("touchend", endHold);
+}
+
+function completeInternalization() {
+  isHolding = false;
+  cancelAnimationFrame(holdAnim);
+  document.body.classList.remove("screen-shake");
+
+  // Visual explosion
+  chestGlow.style.opacity = "1";
+  chestGlow.style.transform = "scale(2)";
+  chestGlow.style.transition = "all 0.5s ease";
+
+  // System crash visual
+  const bg = document.getElementById("s02-2c-bg");
+  bg.style.filter = "brightness(2) hue-rotate(90deg) saturate(3)";
+  setTimeout(() => bg.style.filter = "brightness(0.3) grayscale(1)", 200);
+  setTimeout(() => bg.style.filter = "brightness(0.8) grayscale(0.5)", 600);
+
+  // Glitch
+  triggerGlitch();
+
+  // Final subtitles
+  showSubtitle("系统错误。因果信物已物理绑定。渡者权限：降级。", {
+    class: "subtitle-system",
+    duration: 4000,
+    onEnd: () => {
+      showSubtitle("检测到未授权记忆读取。启动《焚书》协议。", {
+        class: "subtitle-system",
+        duration: 4000,
+        onEnd: () => {
+          showSubtitle("......", { class: "subtitle-human", duration: 1500, onEnd: () => {
+            showSubtitle("不。我有。", {
+              class: "subtitle-human",
+              duration: 3000,
+              onEnd: () => {
+                // Fade out all
+                subMain.classList.remove("show");
+                subAppendix.classList.remove("show");
+                setTimeout(() => enterEndScreen(), 1500);
+              }
+            });
+          }});
+        }
+      });
+    }
+  });
+
+  // Disable chest zone
+  chestZone.style.pointerEvents = "none";
+  progressBar.classList.remove("show");
+
+  // Play end audio
+  playAudio("a09", 0.8);
+  fadeAudio("a03", 0, 3000);
+}
+
+// ========== END SCREEN ==========
+function enterEndScreen() {
+  switchScene("node-end", { delay: 2000, onEnter: () => {
+    fadeAudio("a09", 0, 5000);
+
+    setTimeout(() => {
+      document.getElementById("end-line-1").classList.add("show");
+    }, 500);
+    setTimeout(() => {
+      document.getElementById("end-line-2").classList.add("show");
+    }, 2500);
+    setTimeout(() => {
+      document.getElementById("end-line-3").classList.add("show");
+    }, 4500);
+    setTimeout(() => {
+      document.getElementById("end-restart").style.opacity = "1";
+    }, 7000);
+  }});
+}
+
+// ========== INIT ==========
+document.addEventListener("DOMContentLoaded", () => {
+  // Audio pre-warm (silent play to unlock)
+  document.addEventListener("click", () => {
+    Object.values(audio).forEach(a => {
+      if (a.paused && a.currentTime === 0) {
+        a.play().then(() => { a.pause(); a.currentTime = 0; }).catch(() => {});
+      }
+    });
+  }, { once: true });
+});
+</script>
+</body>
+</html>

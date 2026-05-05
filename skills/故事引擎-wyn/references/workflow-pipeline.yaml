@@ -1,0 +1,398 @@
+# 星轨故事引擎 — 创作管线定义
+# 版本：1.0.0
+# 设计原则：
+#   - 每个阶段有明确的产出物和完成标准
+#   - 门禁是 advisory（建议性），创作者可以跳过，但系统会提醒
+#   - 管线是推荐路径，不是强制线性流程
+#   - 支持从任意阶段进入（已有大纲可以直接从结构工坊开始）
+
+pipeline:
+  name: 星轨创作管线
+  version: "1.0.0"
+  description: "从选题到成文的完整创作操作系统，借鉴影视公司开发流程"
+
+phases:
+
+  - id: greenlight
+    name: 绿灯评估
+    description: "选题值不值得做？市场空间、类型定位、差异化在哪？"
+    advisory: true
+    entry_conditions:
+      - 用户提出创作意向或灵感
+    steps:
+      - name: 选题评估
+        description: "评估选题的商业价值、艺术价值、可行性"
+        action: |
+          从三个维度评估：
+          1. 市场空间：当前市场上同类型作品表现如何？受众群体在哪？
+          2. 差异化：这个故事和别人有什么不同？核心卖点是什么？
+          3. 可行性：以当前资源和能力，能不能做出来？
+        produces:
+          - artifact: 选题评估报告
+            format: markdown
+            location: ".learnings/PROJECT.md"
+            validation:
+              - field: 选题一句话概述
+              - field: 类型定位
+              - field: 目标受众
+              - field: 差异化卖点
+      - name: 类型定位
+        description: "确定作品类型基调，匹配知识资产"
+        action: |
+          根据选题方向，确定需要激活哪些知识资产：
+          - 需要民间叙事母题？→ 激活民俗-wyn
+          - 需要商业智慧背景？→ 激活古今商海-wyn
+          - 需要命理驱动角色？→ 激活ziwei-engine
+          - 需要情感线设计？→ 激活情感戏-wyn
+        produces:
+          - artifact: 知识资产清单
+            format: inline
+    exit_gate:
+      description: "绿灯门禁：选题是否通过评估？"
+      checks:
+        - check: 选题报告是否包含一句话概述和核心卖点
+          severity: advisory
+        - check: 是否已确定类型定位和目标受众
+          severity: advisory
+      ruling: "ADVISORY — 创作者可以跳过，系统仅提醒"
+
+  - id: inspiration
+    name: 灵感开发
+    description: "从零散想法到可执行的故事大纲"
+    advisory: true
+    entry_conditions:
+      - 通过绿灯评估，或用户已有明确灵感
+    steps:
+      - name: 灵感收集
+        description: "收集零散想法、关键词、题材偏好"
+        triggers:
+          - "我有个灵感"
+          - "我想写一个关于..."
+          - "帮我展开这个想法"
+        action: |
+          将零散输入整理为结构化的核心概念卡片：
+          - 核心冲突是什么
+          - 主角是谁、想要什么、什么阻止他
+          - 这个故事的核心情感体验是什么
+        produces:
+          - artifact: 核心概念卡片
+            format: inline
+            validation:
+              - field: 核心冲突
+              - field: 主角一句话描述
+              - field: 核心情感体验
+
+      - name: 梗概生成
+        description: "从核心概念展开为500字故事梗概"
+        triggers:
+          - "展开梗概"
+          - "写个故事梗概"
+        action: |
+          生成起承转合四段式梗概：
+          - 起（世界观+日常）：建立世界、人物出场
+          - 承（催化剂+上升）：平衡被打破、主角被迫行动
+          - 转（中点+危机）：最大转折、跌入谷底
+          - 合（高潮+结局）：最终对决、新平衡
+        produces:
+          - artifact: 故事梗概
+            format: markdown
+            location: ".learnings/PROJECT.md"
+            validation:
+              - field: 梗概字数 >= 300字
+              - field: 包含明确的起承转合
+
+      - name: 大纲展开
+        description: "从梗概展开为完整的分集/分章大纲"
+        triggers:
+          - "展开大纲"
+          - "生成大纲"
+        action: |
+          根据作品形式展开：
+          - 剧集：分集大纲（含主线/支线/伏笔标注）
+          - 小说：分章大纲（含节奏曲线标注）
+          - 电影：分幕大纲（含节拍表）
+        produces:
+          - artifact: 分集/分章大纲
+            format: markdown
+            location: ".learnings/PLOT_POINTS.md"
+            validation:
+              - field: 每集/章的标题和主要内容
+              - field: 主线/支线标注
+              - field: 关键情节点标记
+    exit_gate:
+      description: "灵感门禁：大纲是否具备继续推进的条件？"
+      checks:
+        - check: 大纲是否覆盖完整故事弧
+          severity: advisory
+        - check: 主线是否清晰
+          severity: advisory
+        - check: 至少有一个核心冲突
+          severity: advisory
+
+  - id: character
+    name: 人物工厂
+    description: "从大纲需求到完整人物档案，支持命理驱动角色生成"
+    advisory: true
+    entry_conditions:
+      - 大纲已完成，或用户指定要设计人物
+    steps:
+      - name: 人物需求清单
+        description: "从大纲中提取需要哪些人物"
+        action: |
+          扫描大纲，列出：
+          - 必须出场的人物（主角/对手/盟友）
+          - 建议出场的人物（丰富世界观）
+          - 每个人物的叙事功能
+        produces:
+          - artifact: 人物需求清单
+            format: inline
+
+      - name: 角色生成
+        description: "为每个人物生成完整档案"
+        triggers:
+          - "设计人物"
+          - "生成角色"
+        action: |
+          使用 character-template.md 生成人物小传：
+          - 基础信息 + 道德坐标（X/Y轴）
+          - 核心驱动力（欲望/恐惧/矛盾）
+          - 人物弧光（起点→转折→终点）
+          - 标志性特征（语言/行为/物品）
+          - 关系网
+          
+          可选激活紫微斗数角色设计：
+          - 输入基础属性 → 自动匹配144命盘
+          - 命盘特质融入人物性格设计
+        produces:
+          - artifact: 人物小传（每人一份）
+            format: markdown
+            location: ".learnings/CHARACTERS.md"
+            validation:
+              - field: 道德坐标已填写
+              - field: 核心矛盾已定义
+              - field: 人物弧光已规划
+          - artifact: 关系图谱
+            format: mermaid
+            location: ".learnings/CHARACTERS.md"
+            validation:
+              - field: 所有主要人物已连线
+              - field: 冲突/同盟/暧昧关系已标注
+
+      - name: 星宿关系配对（可选）
+        description: "为关键人物对配置二十八星宿关系"
+        action: |
+          对需要深度情感线的人物对：
+          - 确定星宿关系类型（安坏/荣亲/危成/友衰/业胎/命之星）
+          - 将星宿关系特质融入人物互动设计
+          - 生成配对关系描述
+        produces:
+          - artifact: 星宿配对表
+            format: inline
+    exit_gate:
+      description: "人物门禁：核心人物是否就位？"
+      checks:
+        - check: 主角和对手的小传已完成
+          severity: advisory
+        - check: 关系图谱已生成
+          severity: advisory
+        - check: 每个主要人物都有人物弧光
+          severity: advisory
+
+  - id: structure
+    name: 结构设计
+    description: "大纲+人物→完整叙事结构，含节奏、伏笔、多线编排"
+    advisory: true
+    entry_conditions:
+      - 大纲和核心人物已完成
+    steps:
+      - name: 三幕结构诊断
+        description: "检验大纲的三幕结构是否健康"
+        triggers:
+          - "检查结构"
+          - "诊断结构"
+        action: |
+          使用 story-structure.md 进行诊断：
+          - 第一幕建置：世界建立+催化剂位置是否合理
+          - 第二幕对抗：中点翻转+谷底是否存在
+          - 第三幕解决：高潮是否解决主线
+          - 各幕占比是否均衡（25/50/25）
+        produces:
+          - artifact: 结构诊断报告
+            format: inline
+            validation:
+              - field: 每幕的问题列表
+              - field: 修改建议
+
+      - name: 伏笔系统设计
+        description: "规划全剧伏笔的埋设和回收"
+        triggers:
+          - "埋伏笔"
+          - "设计伏笔"
+        action: |
+          使用 hook-template.md 设计伏笔：
+          - 核心线索伏笔（影响主线）
+          - 红鲱鱼（误导观众）
+          - 情感线索（人物关系暗线）
+          - 人物秘密（角色隐藏信息）
+          - 建立伏笔管理表（ID/位置/状态追踪）
+        produces:
+          - artifact: 伏笔管理表
+            format: markdown
+            location: ".learnings/HOOKS.md"
+            validation:
+              - field: 每条伏笔有埋设和回收位置
+              - field: 重要性标注
+
+      - name: 多线叙事编排
+        description: "编排主线/支线/暗线的交叉节奏"
+        action: |
+          梳理所有叙事线：
+          - 主线进度追踪
+          - 支线与主线的交叉碰撞点
+          - 暗线的潜伏和浮出时机
+          - 每集/章的信息释放节奏
+        produces:
+          - artifact: 叙事线编排表
+            format: markdown
+            location: ".learnings/THREADS.md"
+    exit_gate:
+      description: "结构门禁：叙事架构是否稳固？"
+      checks:
+        - check: 三幕结构通过诊断
+          severity: advisory
+        - check: 伏笔系统已建立
+          severity: advisory
+        - check: 多线编排已梳理
+          severity: advisory
+
+  - id: writing
+    name: 剧本写作
+    description: "从结构到文字，场景对白成文"
+    advisory: true
+    entry_conditions:
+      - 结构设计已完成
+    steps:
+      - name: 场景列表生成
+        description: "将大纲细化为场景列表"
+        action: |
+          每集/章拆分为场景：
+          - 场景编号、地点、时间
+          - 出场人物、核心冲突
+          - 信息释放点（揭示/伏笔）
+          - 节奏标注（紧张/舒缓/转折）
+        produces:
+          - artifact: 场景列表
+            format: markdown
+
+      - name: 对白生成
+        description: "基于人物语言指纹生成场景对白"
+        triggers:
+          - "写段对白"
+          - "写场景"
+        action: |
+          对白工坊核心流程：
+          - 匹配角色语言指纹（口癖/语速/用词）
+          - 确保对白推进情节或揭示人物
+          - 避免功能性的"说明性对白"
+          - 每句对白都有潜台词
+        produces:
+          - artifact: 场景对白
+            format: markdown
+            location: ".learnings/DIALOGUES.md"
+
+      - name: 成文
+        description: "整合场景列表和对白，完成完整稿"
+        action: |
+          按场景列表顺序，逐场成文：
+          - 场景描述（环境/氛围/动作）
+          - 人物对白（带舞台提示）
+          - 内心独白（必要时）
+          - 场景过渡
+        produces:
+          - artifact: 完整稿件
+            format: markdown
+    exit_gate:
+      description: "写作门禁：初稿是否完成？"
+      checks:
+        - check: 所有计划场景已写完
+          severity: advisory
+        - check: 主要人物的弧光已体现
+          severity: advisory
+
+  - id: review
+    name: 剧本会诊
+    description: "多维度对抗性审查，找问题而非验证"
+    advisory: true
+    entry_conditions:
+      - 至少有完整大纲或部分成文稿
+    steps:
+      - name: 维度识别
+        description: "自动识别需要审查的维度"
+        action: |
+          扫描内容，识别涉及维度：
+          - 结构问题 → 麦基/救猫咪/Dramatica
+          - 人物问题 → 北电体系/李安/人物弧光检验
+          - 对白问题 → 索尔金/塔伦蒂诺/语言指纹
+          - 类型适配 → 该类型的代表导演/编剧
+          - 情感逻辑 → 情感工程/观众共鸣
+        produces:
+          - artifact: 审查维度清单
+            format: inline
+
+      - name: 并行专家会诊
+        description: "多专家并行攻击，找问题不验证"
+        action: |
+          对抗性审查核心规则：
+          1. 每个专家的任务是"找问题"，不是"夸好"
+          2. 专家必须独立出意见，不能互相参考
+          3. 分歧不得静默消解，必须显式呈现
+          4. 每个问题必须附带修改建议
+          
+          输出格式：
+          【共识问题】所有专家都指出的
+          【分歧点】专家意见不同的（必须呈现双方理由）
+          【建议修改】按优先级排序（P0必须改/P1建议改/P2锦上添花）
+        produces:
+          - artifact: 会诊报告
+            format: markdown
+            validation:
+              - field: 共识问题列表
+              - field: 分歧点（如有）
+              - field: P0/P1/P2 修改建议
+
+      - name: 修改执行
+        description: "根据会诊报告执行修改"
+        action: |
+          按优先级执行修改：
+          P0 → 必须修改（结构性问题/逻辑硬伤）
+          P1 → 建议修改（节奏/人物/对白问题）
+          P2 → 可选修改（润色/提升）
+          
+          修改后自动更新 .learnings/ 相关文件
+        produces:
+          - artifact: 修改记录
+            format: markdown
+    exit_gate:
+      description: "会诊门禁：P0问题是否已全部解决？"
+      checks:
+        - check: P0问题已全部修改
+          severity: required
+        - check: 会诊报告已存档
+          severity: advisory
+
+# 管线元信息
+meta:
+  total_phases: 6
+  design_philosophy: |
+    这条管线的设计理念来自顶级影视公司的开发流程：
+    - 绿灯评估 = Greenlight Committee（选题过会）
+    - 灵感开发 = Writer's Room（编剧室）
+    - 人物工厂 = Casting + Character Bible（角色圣经）
+    - 结构设计 = Story Break（故事拆解）
+    - 剧本写作 = Production Writing（制作稿）
+    - 剧本会诊 = Script Doctor（剧本医生）
+    
+    门禁是 advisory 的——创作者永远有最终决定权。
+    管线是推荐路径——可以从任意阶段进入或跳过。
+  
+  reference: "借鉴 Claude Code Game Studios 的 workflow-catalog.yaml 设计"

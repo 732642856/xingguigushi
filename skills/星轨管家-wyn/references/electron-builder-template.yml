@@ -1,0 +1,60 @@
+# electron-builder 配置模板
+# 复制到项目根目录，命名为 electron-builder.yml
+
+appId: com.yourcompany.yourapp
+copyright: Copyright © 2026 Your Name
+productName: YourAppName
+
+asar: true
+
+# 通用配置
+directories:
+  output: dist
+  buildResources: build
+
+# 文件包含/排除
+files:
+  - "out/**/*"
+  - "node_modules/**/*"
+  - "package.json"
+  - "!node_modules/.cache"
+  - "!**/*.map"
+
+# Mac 配置
+mac:
+  target:
+    - target: dmg
+      arch: 
+        - x64
+        - arm64
+    - target: zip
+      arch:
+        - x64
+        - arm64
+  category: public.app-category.productivity
+  icon: build/icon.icns
+  # 自动签名，需要配置环境变量
+  identity: null
+  hardenedRuntime: true
+  gatekeeperAssess: false
+  entitlements: build/entitlements.mac.plist
+  entitlementsInherit: build/entitlements.mac.plist
+
+# DMG 配置
+dmg:
+  contents:
+    - x: 130
+      y: 220
+    - x: 410
+      y: 220
+      type: link
+      path: /Applications
+
+# 发布配置
+publish:
+  provider: github
+  owner: your-github-username
+  repo: your-repo-name
+
+# 自动更新
+checkForUpdates: true
