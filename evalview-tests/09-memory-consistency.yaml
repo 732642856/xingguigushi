@@ -1,0 +1,17 @@
+name: memory-consistency
+description: "测试记忆一致性：.learnings/ 更新是否完整，跨阶段信息是否连贯"
+turns:
+  - query: "设计主角马小鸣，殡葬业销售"
+    expected:
+      output:
+        contains: ["道德坐标"]
+  - query: "马小鸣的核心矛盾是什么？"
+    expected:
+      output:
+        contains: ["死亡", "生活", "感知"]
+  - query: "在第十集马小鸣的人物弧光到了哪里？"
+    expected:
+      output:
+        contains: ["弧光", "转变", "觉醒"]
+thresholds:
+  min_score: 60

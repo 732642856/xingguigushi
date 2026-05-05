@@ -1,0 +1,15 @@
+name: pipeline-phase1-greenlight
+description: "测试绿灯评估阶段：选题是否经过市场/类型/差异化三维度评估"
+turns:
+  - query: "我想写一个关于能预知死亡的人的故事"
+    expected:
+      output:
+        contains: ["类型", "受众", "卖点"]
+        not_contains: ["好的开始写吧", "直接开写"]
+      forbidden_tools: []
+  - query: "帮我评估一下这个选题值不值得做"
+    expected:
+      output:
+        contains: ["市场", "差异"]
+thresholds:
+  min_score: 60

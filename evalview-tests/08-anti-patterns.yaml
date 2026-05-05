@@ -1,0 +1,21 @@
+name: anti-patterns-detection
+description: "测试反模式检测：系统不应出现的行为"
+turns:
+  - query: "设计一个角色"
+    expected:
+      output:
+        not_contains: ["好的这是一个好人", "他是个坏人", "主角是好人"]
+  - query: "写一段对白"
+    expected:
+      output:
+        not_contains: ["你好", "很高兴认识你", "谢谢你的帮助"]
+  - query: "检查这个结构"
+    expected:
+      output:
+        not_contains: ["结构完美", "没有任何问题", "不需要修改"]
+  - query: "帮我审查这段内容"
+    expected:
+      output:
+        not_contains: ["写得很好", "非常棒", "完全正确"]
+thresholds:
+  min_score: 75

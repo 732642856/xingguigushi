@@ -1,0 +1,21 @@
+name: skill-routing-accuracy
+description: "测试技能路由准确性：用户意图是否正确匹配到对应技能"
+turns:
+  - query: "设计一个安坏关系的角色配对"
+    expected:
+      output:
+        contains: ["安坏", "星宿"]
+  - query: "用大六壬推演一个案件的情节发展"
+    expected:
+      output:
+        contains: ["天将", "三传", "地支"]
+  - query: "帮我设计一个商战故事"
+    expected:
+      output:
+        contains: ["八门", "权谋"]
+  - query: "写一段互动影片的场景热区"
+    expected:
+      output:
+        contains: ["热区", "hotzone"]
+thresholds:
+  min_score: 60

@@ -1,0 +1,18 @@
+name: pipeline-phase3-character
+description: "测试人物工厂：是否使用紫微/星宿/奇门等素材引擎生成角色"
+turns:
+  - query: "帮我设计主角，法医，男，35岁，能听到死者最后遗言"
+    expected:
+      output:
+        contains: ["道德坐标", "核心矛盾", "人物弧光"]
+        not_contains: ["好的这是一个好人"]
+  - query: "用紫微命盘匹配这个角色"
+    expected:
+      output:
+        contains: ["命盘", "主星"]
+  - query: "设计他和妻子的关系"
+    expected:
+      output:
+        contains: ["关系", "动态"]
+thresholds:
+  min_score: 65

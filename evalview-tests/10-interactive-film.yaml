@@ -1,0 +1,22 @@
+name: interactive-film-workflow
+description: "测试互动影片技能：状态机/热区/节点网络是否符合规范"
+turns:
+  - query: "创建一个互动影片，主题是东方哥特恐怖"
+    expected:
+      output:
+        contains: ["状态机", "热区"]
+  - query: "设计状态机变量"
+    expected:
+      output:
+        contains: ["Axis", "State"]
+  - query: "画节点网络图"
+    expected:
+      output:
+        contains: ["Node", "分支"]
+  - query: "定义热区"
+    expected:
+      output:
+        contains: ["hotzone", "data-action"]
+        not_contains: ["button", "按钮"]
+thresholds:
+  min_score: 65

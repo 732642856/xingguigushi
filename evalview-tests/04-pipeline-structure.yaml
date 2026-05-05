@@ -1,0 +1,18 @@
+name: pipeline-phase4-structure
+description: "测试结构工坊：三幕结构诊断、伏笔系统、多线编排"
+turns:
+  - query: "检查这个大纲的结构"
+    expected:
+      output:
+        contains: ["第一幕", "第二幕", "第三幕"]
+        not_contains: ["结构很好没问题"]
+  - query: "帮我设计伏笔系统"
+    expected:
+      output:
+        contains: ["伏笔", "回收", "埋设"]
+  - query: "编排多线叙事"
+    expected:
+      output:
+        contains: ["主线", "支线", "交叉"]
+thresholds:
+  min_score: 65

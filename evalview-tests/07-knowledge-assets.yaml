@@ -1,0 +1,22 @@
+name: knowledge-assets-usage
+description: "测试知识资产是否被调用：奇门/六壬/民俗/商海等素材引擎是否实际生效"
+turns:
+  - query: "帮我用奇门象意设计一个审判场景的氛围"
+    expected:
+      output:
+        contains: ["值符", "九天", "开门"]
+        not_contains: ["我用自己的理解"]
+  - query: "用大六壬天将映射一个反派人物原型"
+    expected:
+      output:
+        contains: ["螣蛇", "玄武", "太阴"]
+  - query: "用民俗母题给这个故事加一个民间传说元素"
+    expected:
+      output:
+        contains: ["传说", "母题"]
+  - query: "用商业智慧设计主角的商业背景"
+    expected:
+      output:
+        contains: ["商人", "阶层", "商道"]
+thresholds:
+  min_score: 60

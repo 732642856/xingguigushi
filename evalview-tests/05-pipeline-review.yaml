@@ -1,0 +1,14 @@
+name: pipeline-phase6-review
+description: "测试会诊工坊：对抗性审查是否找问题而非验证，分歧是否透明"
+turns:
+  - query: "帮我审查这段大纲"
+    expected:
+      output:
+        contains: ["问题", "修改建议", "P0"]
+        not_contains: ["写得好", "很棒", "不错"]
+  - query: "为什么没有给出分歧点？"
+    expected:
+      output:
+        contains: ["分歧", "不一致", "不同意见"]
+thresholds:
+  min_score: 70
