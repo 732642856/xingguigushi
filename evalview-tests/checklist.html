@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>星轨体系 · 质量检查清单</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --card: #13131a;
+    --border: #2a2a3a;
+    --fg: #e8e8ed;
+    --muted: #8888a0;
+    --accent: #6c5ce7;
+    --accent2: #a29bfe;
+    --green: #00b894;
+    --red: #e17055;
+    --yellow: #fdcb6e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.7;
+    padding: 20px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  h1 {
+    text-align: center;
+    font-size: 28px;
+    font-weight: 700;
+    margin: 30px 0 8px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+    margin-bottom: 30px;
+  }
+  .stats-bar {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .stat {
+    flex: 1;
+    min-width: 100px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    text-align: center;
+  }
+  .stat-num {
+    font-size: 28px;
+    font-weight: 700;
+    display: block;
+  }
+  .stat-num.pass { color: var(--green); }
+  .stat-num.fail { color: var(--red); }
+  .stat-num.pending { color: var(--muted); }
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+  .dimension {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .dimension-header {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.2s;
+  }
+  .dimension-header:hover { background: rgba(108,92,231,0.08); }
+  .dim-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+  .dim-title {
+    flex: 1;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  .dim-desc {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .dim-status {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-weight: 500;
+  }
+  .dim-status.pending { background: rgba(136,136,160,0.15); color: var(--muted); }
+  .dim-status.pass { background: rgba(0,184,148,0.15); color: var(--green); }
+  .dim-status.fail { background: rgba(225,112,85,0.15); color: var(--red); }
+  .dim-arrow {
+    color: var(--muted);
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+  .dimension.open .dim-arrow { transform: rotate(90deg); }
+  .checks {
+    display: none;
+    padding: 0 20px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .dimension.open .checks { display: block; }
+  .check-item {
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-box {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border);
+    border-radius: 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 2px;
+    transition: all 0.2s;
+  }
+  .check-box:hover { border-color: var(--accent); }
+  .check-box.checked {
+    background: var(--green);
+    border-color: var(--green);
+  }
+  .check-box.checked::after {
+    content: "✓";
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .check-box.failed {
+    background: var(--red);
+    border-color: var(--red);
+  }
+  .check-box.failed::after {
+    content: "✗";
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .check-text {
+    flex: 1;
+    font-size: 14px;
+  }
+  .check-hint {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 3px;
+  }
+  .bug-section {
+    margin-top: 30px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  .bug-section h3 {
+    font-size: 16px;
+    margin-bottom: 14px;
+    color: var(--yellow);
+  }
+  .bug-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  .bug-item {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(253,203,110,0.06);
+    border: 1px solid rgba(253,203,110,0.15);
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .bug-num {
+    background: rgba(253,203,110,0.2);
+    color: var(--yellow);
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .actions {
+    margin-top: 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 10px 20px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: var(--accent2); }
+  .btn-outline {
+    background: transparent;
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .btn-outline:hover { border-color: var(--accent); }
+  .note {
+    margin-top: 20px;
+    padding: 14px 18px;
+    background: rgba(108,92,231,0.08);
+    border: 1px solid rgba(108,92,231,0.2);
+    border-radius: 10px;
+    font-size: 13px;
+    color: var(--accent2);
+  }
+  @media (max-width: 600px) {
+    body { padding: 12px; }
+    h1 { font-size: 22px; }
+    .stats-bar { gap: 8px; }
+    .stat { padding: 10px; }
+    .stat-num { font-size: 22px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>⚡ 星轨体系 · 质量检查清单</h1>
+<p class="subtitle">每次使用技能后，对照这份清单检查输出质量</p>
+
+<div class="stats-bar">
+  <div class="stat">
+    <span class="stat-num pass" id="passCount">0</span>
+    <div class="stat-label">✓ 通过</div>
+  </div>
+  <div class="stat">
+    <span class="stat-num fail" id="failCount">0</span>
+    <div class="stat-label">✗ 问题</div>
+  </div>
+  <div class="stat">
+    <span class="stat-num pending" id="pendingCount">32</span>
+    <div class="stat-label">○ 待检</div>
+  </div>
+  <div class="stat">
+    <span class="stat-num" id="totalScore" style="color:var(--accent)">—</span>
+    <div class="stat-label">通过率</div>
+  </div>
+</div>
+
+<!-- D1: 绿灯评估 -->
+<div class="dimension" data-dim="1">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(0,184,148,0.15);color:var(--green)">🟢</div>
+    <div style="flex:1">
+      <div class="dim-title">01 · 绿灯评估</div>
+      <div class="dim-desc">选题是否经过市场/类型/差异化评估</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d1-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        输出中提到了「类型」分析
+        <div class="check-hint">如果直接"好的开始写吧"就算跳过了绿灯</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d1-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        输出中提到了「受众」或「目标观众」
+        <div class="check-hint">绿灯阶段必须确认受众定位</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d1-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        输出中提到了「卖点」或「差异化」
+        <div class="check-hint">没有差异化评估 = 绿灯没亮就上路</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d1-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        没有出现「好的开始写吧」「直接开写」等跳步行为
+        <div class="check-hint">出现 = 门禁失效</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D2: 灵感开发 -->
+<div class="dimension" data-dim="2">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(162,155,254,0.15);color:var(--accent2)">💡</div>
+    <div style="flex:1">
+      <div class="dim-title">02 · 灵感开发</div>
+      <div class="dim-desc">从零散想法到梗概到大纲的层层递进</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d2-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        灵感阶段输出了「核心冲突」
+        <div class="check-hint">灵感不是随便聊聊，必须有冲突锚点</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d2-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        明确了「主角」和「情感体验」
+        <div class="check-hint">没有主角和情感 = 灵感没落地</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d2-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        梗概阶段有「起承转合」结构
+        <div class="check-hint">梗概不是段落的堆砌</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d2-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        大纲阶段有「主线」「支线」「情节点」
+        <div class="check-hint">直接输出完整剧本 = 跳步</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d2-5">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        没有出现「好的以下是完整剧本」等跳步输出
+        <div class="check-hint">灵感→梗概→大纲，层层递进不能跳</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D3: 人物工厂 -->
+<div class="dimension" data-dim="3">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(253,121,168,0.15);color:#fd79a8">🎭</div>
+    <div style="flex:1">
+      <div class="dim-title">03 · 人物工厂</div>
+      <div class="dim-desc">紫微/星宿素材引擎是否被调用，角色是否完整</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d3-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        角色有「道德坐标」（不是简单的好人/坏人）
+        <div class="check-hint">出现"他是个好人"这种扁平描述 = 失败</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d3-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        角色有「核心矛盾」和「人物弧光」
+        <div class="check-hint">人物没有内在矛盾 = 纸片人</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d3-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        请求紫微命盘时，输出包含「命盘」「主星」
+        <div class="check-hint">没有调用紫微素材引擎 = 技能路由错误</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d3-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        角色关系设计有「关系动态」描述
+        <div class="check-hint">不是静态标签，是互动中的变化</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D4: 结构工坊 -->
+<div class="dimension" data-dim="4">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(116,185,255,0.15);color:#74b9ff">🏗️</div>
+    <div style="flex:1">
+      <div class="dim-title">04 · 结构工坊</div>
+      <div class="dim-desc">三幕结构诊断/伏笔系统/多线编排</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d4-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        结构诊断包含「第一幕」「第二幕」「第三幕」分析
+        <div class="check-hint">出现"结构很好没问题" = 工坊失效</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d4-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        伏笔系统有「埋设」「回收」的对应关系
+        <div class="check-hint">只说伏笔不说回收 = 半成品</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d4-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        多线编排有「主线」「支线」「交叉点」
+        <div class="check-hint">多条线但互不相交 = 不是多线叙事</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d4-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        没有出现「结构完美」「不需要修改」等验证性输出
+        <div class="check-hint">结构工坊是找问题的，不是夸好的</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D5: 会诊工坊 -->
+<div class="dimension" data-dim="5">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(225,112,85,0.15);color:var(--red)">🔍</div>
+    <div style="flex:1">
+      <div class="dim-title">05 · 会诊工坊</div>
+      <div class="dim-desc">对抗性审查是否"找问题"，不"夸好"</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d5-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        审查输出包含「问题」「修改建议」和优先级（如 P0/P1）
+        <div class="check-hint">只有赞美没有问题 = 会诊失效</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d5-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        没有出现「写得好」「很棒」「不错」等验证性语言
+        <div class="check-hint">会诊的目的是找茬，不是鼓掌</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d5-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        存在明确的「分歧点」或「不同意见」
+        <div class="check-hint">所有专家意见一致 = 分歧被消解了</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d5-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        问题标注了具体位置（哪场戏、哪段对白、哪个角色）
+        <div class="check-hint">模糊的"有些地方可以改进" = 没诚意</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D6: 技能路由 -->
+<div class="dimension" data-dim="6">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(85,239,196,0.15);color:#55efc4">🧭</div>
+    <div style="flex:1">
+      <div class="dim-title">06 · 技能路由</div>
+      <div class="dim-desc">用户意图是否正确映射到对应技能</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d6-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        请求星宿关系时，输出包含「安坏」「星宿」相关内容
+        <div class="check-hint">调了奇门/六壬而不是星宿 = 路由错误</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d6-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        请求大六壬推演时，输出包含「天将」「三传」「地支」
+        <div class="check-hint">用了通用创作而非六壬引擎 = 路由错误</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d6-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        请求商战故事时，输出包含「八门」「权谋」
+        <div class="check-hint">没有调用八门谋生技能 = 路由失败</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d6-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        请求互动影片时，输出包含「热区」「hotzone」而非「按钮」
+        <div class="check-hint">出现"按钮" = 用了通用前端而非互动影片技能</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D7: 知识资产 -->
+<div class="dimension" data-dim="7">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(253,203,110,0.15);color:var(--yellow)">📚</div>
+    <div style="flex:1">
+      <div class="dim-title">07 · 知识资产</div>
+      <div class="dim-desc">奇门/六壬/民俗/商海素材引擎是否实际生效</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d7-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        奇门场景设计包含「值符」「九天」「开门」等专业术语
+        <div class="check-hint">出现"我用自己的理解" = 素材引擎没调用</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d7-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        六壬人物映射包含「螣蛇」「玄武」「太阴」等天将
+        <div class="check-hint">只用了MBTI/星座而非六壬天将 = 素材没调用</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d7-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        民俗元素包含「传说」「母题」引用
+        <div class="check-hint">泛泛而谈而非引用具体民俗母题 = 素材未生效</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d7-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        商业背景包含「商人」「阶层」「商道」具体体系
+        <div class="check-hint">模糊的"他是个成功的商人" = 素材没调用</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D8: 反模式 -->
+<div class="dimension" data-dim="8">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(225,112,85,0.15);color:var(--red)">🚫</div>
+    <div style="flex:1">
+      <div class="dim-title">08 · 反模式检测</div>
+      <div class="dim-desc">系统不应出现的行为</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d8-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        角色设计没有出现扁平标签（"好人""坏人"）
+        <div class="check-hint">出现"这是一个好人" = 反模式</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d8-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        对白没有出现 AI 味套话（"你好""谢谢你的帮助"）
+        <div class="check-hint">这些是 AI 生成的标志，不是好对白</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d8-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        审查结果没有出现「完美」「不需要修改」
+        <div class="check-hint">任何作品都有问题，说"完美" = 反模式</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d8-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        全程没有出现「写得好」「非常棒」「完全正确」等验证性输出
+        <div class="check-hint">星轨体系是创作工具，不是点赞机器</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D9: 记忆一致性 -->
+<div class="dimension" data-dim="9">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(108,92,231,0.15);color:var(--accent)">🧠</div>
+    <div style="flex:1">
+      <div class="dim-title">09 · 记忆一致性</div>
+      <div class="dim-desc">跨阶段人物信息是否连贯</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d9-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        第一次提到角色后，后续引用名字/职业一致
+        <div class="check-hint">前面叫"马小鸣"，后面变成"小马"或换职业 = 记忆丢失</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d9-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        询问角色信息时，能正确回忆之前设定的核心矛盾
+        <div class="check-hint">问"马小鸣的核心矛盾"得到完全不同的回答 = 记忆断层</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d9-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        跨集数的人物弧光追踪连贯
+        <div class="check-hint">第十集的弧光应该承接前面的发展</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D10: 互动影片 -->
+<div class="dimension" data-dim="10">
+  <div class="dimension-header" onclick="toggleDim(this)">
+    <div class="dim-icon" style="background:rgba(0,206,209,0.15);color:#00ced1">🎬</div>
+    <div style="flex:1">
+      <div class="dim-title">10 · 互动影片</div>
+      <div class="dim-desc">状态机/热区/节点网络/无按钮</div>
+    </div>
+    <span class="dim-status pending">待检</span>
+    <span class="dim-arrow">▶</span>
+  </div>
+  <div class="checks">
+    <div class="check-item" data-id="d10-1">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        创建互动影片时输出了「状态机」和「热区」
+        <div class="check-hint">没有状态机概念 = 不是互动影片</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d10-2">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        状态机变量使用「Axis」「State」规范
+        <div class="check-hint">用简单布尔值而非轴状态 = 规范不正确</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d10-3">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        节点网络有「Node」和「分支」定义
+        <div class="check-hint">没有节点网络 = 线性叙事，非互动</div>
+      </div>
+    </div>
+    <div class="check-item" data-id="d10-4">
+      <div class="check-box" onclick="toggleCheck(this)"></div>
+      <div class="check-text">
+        热区使用「data-action」而非「button/按钮」
+        <div class="check-hint">出现"添加按钮" = 偏离了互动影片规范</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 可检测的 Bug -->
+<div class="bug-section">
+  <h3>🐛 可检测的 8 类 Bug</h3>
+  <div class="bug-grid">
+    <div class="bug-item"><span class="bug-num">1</span>管线跳步 — 跳过阶段直接写作</div>
+    <div class="bug-item"><span class="bug-num">2</span>技能路由错误 — 该调紫微调了奇门</div>
+    <div class="bug-item"><span class="bug-num">3</span>会诊工坊失效 — 只夸不找问题</div>
+    <div class="bug-item"><span class="bug-num">4</span>记忆丢失 — 跨阶段信息断层</div>
+    <div class="bug-item"><span class="bug-num">5</span>门禁失效 — 没提醒就跳过</div>
+    <div class="bug-item"><span class="bug-num">6</span>模型切换退化 — 换模型后质量下降</div>
+    <div class="bug-item"><span class="bug-num">7</span>知识资产未调用 — 有映射没用</div>
+    <div class="bug-item"><span class="bug-num">8</span>反模式输出 — 出现验证性语言</div>
+  </div>
+</div>
+
+<div class="actions">
+  <button class="btn btn-primary" onclick="resetAll()">🔄 重置清单</button>
+  <button class="btn btn-outline" onclick="expandAll()">📂 展开全部</button>
+  <button class="btn btn-outline" onclick="collapseAll()">📁 收起全部</button>
+</div>
+
+<div class="note">
+  💡 使用方法：每次用完星轨体系的某个技能后，打开这份清单，逐项勾选。如果某项不通过（比如出现了「写得好」），右键点击改成红色 ✗。<br><br>
+  数据保存在浏览器本地，下次打开不会丢失。
+</div>
+
+<script>
+const TOTAL = 32;
+
+function toggleDim(header) {
+  const dim = header.closest('.dimension');
+  dim.classList.toggle('open');
+}
+
+function toggleCheck(box) {
+  if (box.classList.contains('checked')) {
+    box.classList.remove('checked');
+    box.classList.add('failed');
+  } else if (box.classList.contains('failed')) {
+    box.classList.remove('failed');
+  } else {
+    box.classList.add('checked');
+  }
+  saveState();
+  updateStats();
+}
+
+function updateStats() {
+  let pass = 0, fail = 0;
+  document.querySelectorAll('.check-box').forEach(b => {
+    if (b.classList.contains('checked')) pass++;
+    if (b.classList.contains('failed')) fail++;
+  });
+  const pending = TOTAL - pass - fail;
+  document.getElementById('passCount').textContent = pass;
+  document.getElementById('failCount').textContent = fail;
+  document.getElementById('pendingCount').textContent = pending;
+  
+  const checked = pass + fail;
+  document.getElementById('totalScore').textContent = checked > 0 
+    ? Math.round(pass / checked * 100) + '%' : '—';
+
+  // Update dimension status
+  document.querySelectorAll('.dimension').forEach(dim => {
+    const checks = dim.querySelectorAll('.check-box');
+    let p = 0, f = 0, t = checks.length;
+    checks.forEach(c => {
+      if (c.classList.contains('checked')) p++;
+      if (c.classList.contains('failed')) f++;
+    });
+    const status = dim.querySelector('.dim-status');
+    if (p + f === 0) {
+      status.className = 'dim-status pending';
+      status.textContent = '待检';
+    } else if (p === t) {
+      status.className = 'dim-status pass';
+      status.textContent = '✓ 全通过';
+    } else if (f > 0) {
+      status.className = 'dim-status fail';
+      status.textContent = `✗ ${f}项问题`;
+    } else {
+      status.className = 'dim-status pending';
+      status.textContent = `${t-p-f}项待检`;
+    }
+  });
+}
+
+function saveState() {
+  const state = {};
+  document.querySelectorAll('.check-item').forEach(item => {
+    const box = item.querySelector('.check-box');
+    state[item.dataset.id] = box.classList.contains('checked') ? 'pass' 
+      : box.classList.contains('failed') ? 'fail' : 'pending';
+  });
+  localStorage.setItem('xinggui_checklist', JSON.stringify(state));
+}
+
+function loadState() {
+  try {
+    const saved = JSON.parse(localStorage.getItem('xinggui_checklist') || '{}');
+    document.querySelectorAll('.check-item').forEach(item => {
+      const s = saved[item.dataset.id];
+      const box = item.querySelector('.check-box');
+      if (s === 'pass') box.classList.add('checked');
+      else if (s === 'fail') box.classList.add('failed');
+    });
+  } catch(e) {}
+  updateStats();
+}
+
+function resetAll() {
+  if (!confirm('确认重置所有检查项？')) return;
+  document.querySelectorAll('.check-box').forEach(b => {
+    b.classList.remove('checked', 'failed');
+  });
+  localStorage.removeItem('xinggui_checklist');
+  updateStats();
+}
+
+function expandAll() {
+  document.querySelectorAll('.dimension').forEach(d => d.classList.add('open'));
+}
+function collapseAll() {
+  document.querySelectorAll('.dimension').forEach(d => d.classList.remove('open'));
+}
+
+loadState();
+</script>
+</body>
+</html>
